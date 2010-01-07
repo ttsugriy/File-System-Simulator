@@ -1,3 +1,4 @@
 *.class
 *.tgz
 javadoc
+*.swp

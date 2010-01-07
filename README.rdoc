@@ -1,0 +1,42 @@
+= moss (Modern Operating Systems Simulators)
+is a collection of Java-based simulation programs which illustrate key concepts presented in the text Andrew S. Tanenbaum,   Modern Operating System, Second Edition (Prentice-Hall, 2001). The software is designed for students and instructors using this text. Additional supplemental material for this and other Tanenbaum texts is available from the author's site.
+
+moss was written by Ray Ontko and Alexander Reeder with advice from Andrew S. Tanenbaum and support from Prentice-Hall.
+
+Send comments, suggestions, enhancements to Ray Ontko (rayo@ontko.com).
+
+Moss project is published here with the permission of Ray Ontko.
+
+== File System Simulator (Chapter 6)
+
+The file system simulator shows the inner workings of a UNIX V7 file system. The simulator reads or creates a file which represents the disk image, and keeps track of allocated and free blocks using a bit map. A typical exercise might be for students to write a program (in Java) which invokes various simulated operating system calls against a well-known disk image provided by the instructor. Students may also be asked to implement indirect blocks, list-based free block managment, or write a utility (like fsck) to check and repair the file system.
+
+=== Overview
+
+The MOSS File System Simulator is a collection of Java classes which simulate the file system calls available in a typical Unix-like operating system. The "Kernel" class contains methods (functions) like "creat()", "open()", "read()", "write()", "close()", etc., which read and write blocks in an underlying file in much the same way that a real file system would read and write blocks on an underlying disk device.
+
+In addition to the "Kernel" class, there are a number of underlying classes to support the implementation of the kernel. The classes FileSystem, IndexNode, DirectoryEntry, SuperBlock, Block, BitBlock, FileDescriptor, and Stat contain all data structures and algorithms which implement the simulated file system.
+
+Also included are a number of sample programs which can be used to operate on a simulated file system. The Java programs "ls", "cat", "mkdir", "mkfs", etc., perform file system operations to list directories, display files, create directories, and create (initialize) file systems. These programs illustrate the various file system calls and allow the user to carry out various read and write operations on the simulated file system.
+
+As mentioned above, there is a backing file for our simulated file system. A "dump" program is included with the distribution so that you can examine this file, byte-by-byte. Any dump program may be used (e.g., the "od" program in Unix); we include this one which is simple to use and understand, and can be used with any operating system.
+
+There are a number of ways you can use the simulator to get a better understanding of file systems. You can
+
+use the provided utility programs (mkfs, mkdir, ls, cat, etc.) to perform operations on the simulated file system and use the dump program to examine the underlying file and observe any changes,
+examine the sample utility programs to see how they use the system call interface to perform file operations,
+enhance the sample utility programs to provide additional functionality,
+write your own utility programs to extend the functionality of the simulated file system, and
+modify the underlying Kernel and other implementation classes to extend the functionality of the
+In the sections which follow, you will learn what you need to know to perform each of these activities.
+
+Much more information you can get from the {official page.}[http://www.ontko.com/moss/filesys/user_guide.html]
+
+== Copyright
+
+© Copyright 2001, Prentice-Hall, Inc.
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program (see copying.txt); if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
