@@ -32,6 +32,19 @@ In the sections which follow, you will learn what you need to know to perform ea
 
 Much more information you can get from the {official page.}[http://www.ontko.com/moss/filesys/user_guide.html]
 
+== Additions made as an exercise
+* Enhanced ls.java to display for each file the uid and gid as decimal numbers, and the 9 low-order bits for mode as a 3-digit octal number (i.e.,000..777).
+* Written a program find.java which, given a path name, checks to see if the path exists, and if so lists that path name and all files in all directories (and sub-directories, and sub-sub-directories, etc.) under it, one path name per line. For example:
+    java find /tmp
+might produce the following output:
+    /tmp:
+    /tmp/foo
+
+    /tmp/foo:
+    /tmp/foo/bar
+
+    /tmp/foo/bar:
+
 == Copyright
 
 © Copyright 2001, Prentice-Hall, Inc.
