@@ -1,0 +1,1037 @@
+<html>
+<head>
+<title>Moss | File System Simulator | User Guide</title>
+</head>
+<body bgcolor="#ffffff">
+<h1>
+MOSS File System Simulator
+<br>User Guide</h1>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#purpose">Purpose</a>
+<li><a href="#introduction">Introduction</a>
+<li><a href="#overview">Overview</a>
+<li><a href="#prog">Using File System Simulator Programs</a>
+<ul>
+<li><a href="#prog.mkfs">Using mkfs</a>
+<li><a href="#prog.mkdir">Using mkdir</a>
+<li><a href="#prog.ls">Using ls</a>
+<li><a href="#prog.tee">Using tee</a>
+<li><a href="#prog.cp">Using cp</a>
+<li><a href="#prog.cat">Using cat</a>
+</ul>
+<li><a href="#dump">Dumping the File System</a>
+<li><a href="#conf">Simulator Configuration File</a>
+<ul>
+<li><a href="#conf.options">Configuration File Options</a>
+<li><a href="#conf.sample">A Sample Configuration File</a>
+<li><a href="#conf.alt">Specifying an Alternate Configuration File</a>
+</ul>
+<li><a href="#writing">Writing File System Simulator Programs</a>
+<li><a href="#enhancing">Enhancing the File System Simulator</a>
+<li><a href="#exercises">Suggested Exercises</a>
+<li><a href="#todo">To Do</a>
+<li><a href="#copyright">Copyright</a>
+</ul>
+
+<h2><a name="purpose">Purpose</a></h2>
+
+<p>
+This document is a user guide for the MOSS
+File System Simulator.  
+It explains how to use the simulator and describes the
+programs and the various input files used by and output files produced by the simulator.
+The MOSS software is designed for use with 
+<a href="http://www.cs.vu.nl/~ast/">Andrew S. Tanenbaum</a>, 
+<a href="http://vig.prenhall.com/catalog/academic/product/1,4096,0130313580,00.html">Modern Operating Systems, 2nd Edition</a> 
+(<a href="http://www.prenhall.com/">Prentice Hall</a>, 2001).  
+The File System Simulator and documentation were written by 
+<a href="http://www.ontko.com/~rayo/">Ray Ontko</a>
+(<a href="mailto:rayo@ontko.com"><i>rayo@ontko.com</i></a>).
+
+<p>
+This User Guide assumes that you have already installed and tested
+the simulator.
+If you are looking for installation information,
+please read the 
+<a href="install_unix.html">Installation Guide for 
+Unix/Linux/Solaris/HP-UX Systems</a> or the 
+<a href="install_windows.html">Installation Guide for 
+Win95/98/Me/NT/2000 Systems</a>.
+
+<h2><a name="introduction">Introduction</a></h2>
+<p>
+The file system simulator shows the inner workings of a UNIX V7 
+file system. The simulator reads or creates a file which 
+represents the disk image, and keeps track of allocated 
+and free blocks using a bit map. A typical exercise might be for 
+students to write a program (in Java) which invokes various 
+simulated operating system calls against a well-known disk image 
+provided by the instructor. Students may also be asked to 
+implement indirect blocks, list-based free block managment, or 
+write a utility (like fsck) to check and repair the file system. 
+
+
+<h2><a name="overview">Overview</a></h2>
+
+<p>
+The MOSS File System Simulator is a collection of Java classes
+which simulate the file system calls available in a typical 
+Unix-like operating system.  The "Kernel" class contains 
+methods (functions) like "creat()", "open()", "read()", 
+"write()", "close()", etc., which read and write blocks
+in an underlying file in much the same way that a real 
+file system would read and write blocks on an underlying 
+disk device.  
+
+<p>
+In addition to the "Kernel" class, there are a number of 
+underlying classes to support the implementation of the kernel.
+The classes FileSystem, IndexNode, DirectoryEntry, SuperBlock,
+Block, BitBlock, FileDescriptor, and Stat contain all data
+structures and algorithms which implement the simulated 
+file system.
+
+<p>
+Also included are a number of sample programs which can 
+be used to operate on a simulated file system.  The Java
+programs "ls", "cat", "mkdir", "mkfs", etc., perform 
+file system operations to list directories, display files, 
+create directories, and create (initialize) file systems.  
+These programs illustrate the various file system calls
+and allow the user to carry out various read and write
+operations on the simulated file system.
+
+<p>
+As mentioned above, there is a backing file for our simulated
+file system.  A "dump" program is included with the distribution
+so that you can examine this file, byte-by-byte.  Any dump
+program may be used (e.g., the "od" program in Unix); we include
+this one which is simple to use and understand, and can be 
+used with any operating system.
+
+<p>
+There are a number of ways you can use the simulator to 
+get a better understanding of file systems.  You can
+<ul>
+<li>use the provided utility programs  
+(<tt>mkfs</tt>, <tt>mkdir</tt>, <tt>ls</tt>, <tt>cat</tt>, etc.) to 
+perform operations on the simulated file system and use
+the <tt>dump</tt> program to examine the underlying file and observe
+any changes,
+<li>examine the sample utility programs to see how they use the system
+call interface to perform file operations,
+<li>enhance the sample utility programs to provide additional
+functionality,
+<li>write your own utility programs to extend the functionality of the 
+simulated file system, and
+<li>modify the underlying Kernel and other implementation classes 
+to extend the functionality of the 
+</ul>
+In the sections which follow, you will learn what you need to 
+know to perform each of these activities.
+
+<h2><a name="prog">Using File System Simulator Programs</a></h2>
+
+<h3><a name="prog.mkfs">Using <tt>mkfs</tt></a></h3>
+
+<p>
+The <tt>mkfs</tt> program creates a file system backing file.
+It does this by creating a file whose size is specified by the 
+block size and number of blocks given.  It writes the superblock, 
+the free list blocks, the inode blocks, and the data blocks
+for a new file system.  Note that it will overwrite any existing
+file of the name specified, so be careful when you use this program.
+
+<p>
+This program is similar to the "mkfs" program found in 
+Unix-like operating systems.
+<p>
+The general format for the <tt>mkfs</tt> command is
+<blockquote><pre>
+java mkfs <i>file-name</i> <i>block-size</i> <i>blocks</i>
+</pre></blockquote>
+where
+<dl>
+<dt><i>file-name</i>
+<dd>is the name of the backing file to create (e.g., <tt>filesys.dat</tt>).
+Note that this is the name of a real file, not a file in simulator.
+This is the file that the simulator uses to simulate the disk device
+for the simulated file system.
+This may be any valid file name in your operating system environment.
+<dt><i>block-size</i>
+<dd>is the block size to be used for the file system (e.g., <tt>256</tt>).
+This should be a multiple of the index node (i-node) size (usually 64) 
+and the directory entry size (usually 16).  Modern operating systems 
+usually use a size of 1024, or 512 bytes.  We use 128 or 256 byte block
+sizes in many of our examples so that you can quickly see what happens 
+when directories grow beyond one block.  This should be a decimal 
+number not less than 64, but less than 32768.
+<dt><i>blocks</i>
+<dd>is the number of blocks to create in the file system(e.g., <tt>40</tt>).  
+This number includes any blocks that may be used for the superblock, 
+free list management, inodes, and data blocks.  We use a relatively small
+number here so that you can quickly see what happens if you run out of 
+disk space.  This can be any decimal number greater than 3, but not greater
+than 2<sup>24</sup> - 1 (the maximum number of blocks), although you may not
+have sufficient space to create a very large file.
+</dl>
+
+For example, the command
+<blockquote><pre>
+java mkfs filesys.dat 256 40
+</pre></blockquote>
+will create (or overwrite) a file "filesys.dat" so that it contains
+40 256-byte blocks for a total of 10240 bytes.
+
+<p>
+The output from the command should look something like this:
+<blockquote><pre>
+block_size: 256
+blocks: 40
+super_blocks: 1
+free_list_blocks: 1
+inode_blocks: 8
+data_blocks: 30
+block_total: 40
+
+</pre></blockquote>
+From the output you can see that 
+one block is needed for the superblock, one for 
+free list management, eight for index nodes, and the remaining
+30 are available for data blocks.  
+
+<p>
+Why is there 1 block for free list management?  Note that 30 blocks 
+require 30 bits in the free list bitmap.  Since
+256 bytes/block * 8 bits/byte = 2048 bits/block, clearly
+one bitmap block is sufficient to track block allocation 
+for this file system.
+
+<p>
+Why are there 8 blocks for index nodes?  Note that 30 blocks could
+result in 30 inodes if many one-block files or directories are created. 
+Since each inode requires 64 bytes, only 4 will fit in a block.
+Therefore, 8 blocks are set aside for up to 32 inodes.
+
+<h3><a name="prog.mkdir">Using <tt>mkdir</tt></a></h3>
+
+<p>
+The <tt>mkdir</tt> program can be used to create new 
+directories in our simulated file system.  It does this 
+by creating the file specified as a directory file, and
+then writing the directory entries for "." and ".." to the 
+newly created file.  Note that all directories leading 
+to the new directory must already exist.  
+
+<p>
+This program is similar to the "mkdir" command in Unix-like and 
+MS-DOS-related operating systems.
+<p>
+The general format for the <tt>mkdir</tt> command is
+<blockquote><pre>
+java mkdir <i>directory-path</i>
+</pre></blockquote>
+where
+<dl>
+<dt><i>directory-path</i></dt>
+<dd>is the path of the directory to be created (e.g., "/root", or 
+"temp", or "../home/rayo/moss/filesys").  If <i>directory-path</i>
+does not begin with a "/", then it is appended to the 
+path name for working directory for the default process.
+</dl>
+
+For example, the command
+<blockquote><pre>
+java mkdir /home
+</pre></blockquote>
+
+creates a directory called "home" as a subdirectory of the root
+directory of the file system.
+
+<p>
+Similarly, the command
+<blockquote><pre>
+java mkdir /home/rayo
+</pre></blockquote>
+
+creates a directory called "rayo" as a subdirectory of the 
+"home" directory, which is presumed to already exist as a 
+subdirectory of the root directory of the file system.
+
+<h3><a name="prog.ls">Using <tt>ls</tt></a></h3>
+
+The <tt>ls</tt> program is used to list information
+about files and directories in our simulated file system.  
+For each file or directory name given it displays information
+about the files named, or in the case of directories, for 
+each file in the directories named.  
+
+<p>
+This program is similar to 
+the "ls" command in Unix-like operating systems, or the "dir" 
+command in DOS-related operating systems.
+
+<p>
+The general format for the <tt>ls</tt> command is
+<blockquote><pre>
+java ls <i>path-name ...</i>
+</pre></blockquote>
+where
+<dl>
+<dt><i>path-name ...</i></dt>
+<dd>is a space-separated list of one or more file or 
+directory path names.</dd>
+</dl>
+
+For example, the command
+<blockquote><pre>
+java ls /home
+</pre></blockquote>
+
+lists the contents of the "/home" directory.  For each file
+in the directory, a line is printed showing the name of the
+file or subdirectory, and other pertinent information such 
+as size.
+<p>
+The output from the command should look something like this:
+<blockquote><pre>
+
+/home:
+    1         48 .
+    0         48 ..
+    2         32 rayo
+total files: 3
+
+</pre></blockquote>
+In this case we see that the "/home" directory contains
+entries for ".", "..", and "rayo".
+
+<h3><a name="prog.tee">Using <tt>tee</tt></a></h3>
+
+The <tt>tee</tt> program reads from standard input and
+writes whatever is read to both standard output and 
+the named file.  You can use this program to create 
+files in our simulated file system with content created
+in the operating system environment.
+<p>
+This program is similar to the "tee" command found in
+many Unix-like operating systems.
+
+<p>
+The general format for the <tt>tee</tt> command is
+<blockquote><pre>
+java tee <i>file-path</i>
+</pre></blockquote>
+where 
+<dl>
+<dt><i>file-path</i></dt>
+<dd>is the name of a file to be created in the simulated
+file system.  If the named file already exists, it will
+be overwritten.</dd>
+</dl>
+
+For example, 
+<blockquote><pre>
+echo "howdy, podner" | java tee /home/rayo/hello.txt
+</pre></blockquote>
+causes the single line "howdy, podner" to be written
+to the file "/home/rayo/hello.txt".
+<p>
+The output from the command is
+<blockquote><pre>
+howdy, podner
+
+</pre></blockquote>
+which you should note was the same as the input sent
+to the <tt>tee</tt> program by the "echo" command.
+<p>
+Note that the "|" (pipe) is almost always used with the 
+<tt>tee</tt> program.  Users of Unix-like operating systems
+will find the "echo", and "cat" commands useful to produce
+input for the pipe to <tt>tee</tt>.  Users of MS-DOS-related
+operating systems will find the "echo" and "type" commands
+to be useful in this regard.
+<p>
+If you wish to simply enter text directly to a file, then
+you may use <tt>tee</tt> directly (i.e., without the pipe).
+Users of Unix-like operating systems will need to use
+CTRL-D to signal the end of input.  Users of MS-DOS-related
+operating systems will need to use CTRL-Z to signal the 
+end of input.
+
+<h3><a name="prog.cp">Using <tt>cp</tt></a></h3>
+
+The <tt>cp</tt> program allows you to copy the contents
+from one file to another in our simulated file system.
+If the destination file already exists, it will be overwritten.
+<p>
+This program is similar to the "cp" command in Unix-like 
+operating systems, and the "copy" command in MS-DOS-related
+operating systems.
+<p>
+The general format of the "cp" command is
+<blockquote><pre>
+java cp <i>input-file-name</i> <i>output-file-name</i>
+</pre></blockquote>
+where
+<dl>
+<dt><i>input-file-name</i></dt>
+<dd>is the path-name for the file to be copied (i.e., the 
+<em>source</em> file, and</dd>
+<dt><i>output-file-name</i></dt>
+<dd>is the path-name for the file to be created (i.e., the
+<em>target</em> file.</dd>
+</dl>
+
+For example, 
+<blockquote><pre>
+java cp /home/rayo/hello.txt /home/rayo/greeting.txt
+</pre></blockquote>
+creates a new file "/home/rayo/greeting.txt" by
+copying to it the contents of file "/home/rayo/hello.txt".
+
+<h3><a name="prog.cat">Using <tt>cat</tt></a></h3>
+
+The <tt>cat</tt> program reads the contents of a named file 
+and writes it to standard output.  The <tt>cat</tt> program
+is generally used to display the contents of a file.
+<p>
+This program is similar to the "cat" command in Unix-like
+operating systems, or the "type" command in MS-DOS-related
+operating systems.
+<p>
+The general format of the <tt>cat</tt> command line is
+
+<blockquote><pre>
+java cat <i>file-name</i>
+</pre></blockquote>
+where
+<dl>
+<dt><i>file-name</i></dt>
+<dd>is the name of the file from which data are to be
+read for writing to standard output.
+</dl>
+
+For example, 
+<blockquote><pre>
+java cat /home/rayo/greeting.txt
+</pre></blockquote>
+causes the file "/home/rayo/greeting.txt" to be read,
+the contents of which are written to standard output.
+<p>
+In this case, the output from the program might look 
+something like this
+<blockquote><pre>
+howdy, podner
+
+</pre></blockquote>
+
+<h2><a name="dump">Dumping the File System</a></h2>
+
+<p>
+While you are working with the file system simulator, 
+you may wish to dump the contents of the backing file
+to <em>see</em> if it contains what you <em>think</em>
+it contains.  The <tt>dump</tt> program shows the contents 
+of a file in the operating environment, one byte at a
+time, in various formats (hexadecimal, decimal, ASCII).
+<p>
+Note that <tt>dump</tt> dumps the contents of a real file,
+not a file in our simulated file system.
+
+<p>
+The general format of the <tt>dump</tt> command line is
+<blockquote><pre>
+java dump <i>file-name</i>
+</pre></blockquote>
+where
+<dl>
+<dt><i>file-name</i>
+<dd>is the name of the file to be dumped.  This should
+generally be the name of the backing file for the file
+system simulator (e.g., "filesys.dat").
+</dl>
+The general format of the dump output is
+<blockquote><pre>
+<i>addr</i> <i>hex</i> <i>dec</i> <i>asc</i>
+</pre></blockquote>
+where
+<dl>
+<dt><i>addr</i>
+<dd>is the decimal address of the byte,</dd>
+<dt><i>hex</i>
+<dd>is the hexadecimal value of the byte,</dd>
+<dt><i>dec</i>
+<dd>is the decimal value of the byte, and
+<dt><i>asc</i>
+<dd>is the corresponding ASCII character if the
+value is between 33 and 127 (decimal).
+</dl>
+
+Each line of <tt>dump</tt> output corresponds to a single byte
+in the file.
+To keep the listing brief, <tt>dump</tt> only displays 
+non-zero bytes from the input file.
+<p>
+
+For example
+<blockquote><pre>
+java dump filesys.dat | more
+</pre></blockquote>
+causes the contents of the file "filesys.dat" to be
+displayed, one line per byte.  The "| more" causes
+you to be prompted for each page of the output.
+<p>
+The first page of the output should look 
+something like this:
+<blockquote><pre>
+0 1 1
+5 28 40 (
+9 1 1
+13 2 2
+17 a 10
+256 1f 31
+512 40 64 @
+515 3 3
+523 30 48 0
+527 ff 255
+528 ff 255
+529 ff 255
+530 ff 255
+531 ff 255
+532 ff 255
+533 ff 255
+534 ff 255
+535 ff 255
+536 ff 255
+537 ff 255
+538 ff 255
+539 ff 255
+540 ff 255
+541 ff 255
+
+</pre></blockquote>
+You should notice, for example, that the first block
+(the super block) contains a few numeric values corresponding
+to the block size (the 1 in the 0 byte means 256), 
+number of blocks, etc.  The second block (starting at byte 256)
+contains a few bits that are set, indicating that the first few
+blocks are allocated.  The third block (starting at 512)
+contains a few index nodes; the FF/255 values indicate that
+a direct block is unallocated.  A little further down you
+will see ".", and ".." for the directory entries for the
+root file system, and other data blocks.
+
+<h2><a name="conf">Simulator Configuration File</a></h2>
+
+<p>
+Each file system simulator program must call <tt>Kernel.initialize()</tt>
+before calling any of the other <tt>Kernel</tt> methods.  The 
+<tt>initialize()</tt> method reads a configuration file
+("filesys.conf" is the default), 
+opens the backing file for the file system ("filesys.dat" is the default),
+and performs other initializations.  
+This section of the user guide describes the
+various options which may be set in the configuration file.
+
+<h3><a name="conf.options">Configuration File Options</a></h3>
+
+<table border="1">
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Default Value</th>
+<tr>
+<td valign=top>filesystem.root.filename</td>
+<td valign=top>The name of the file containing the root file system for the 
+simulation.</td>
+<td valign=top><tt>filesys.dat</tt></td>
+<tr>
+<td valign=top>filesystem.root.mode</td>
+<td valign=top>The mode to use when opening the root file system backing file.
+The mode should either be "rw" for reading and writing, or "r" for 
+read-only access.</td>
+<td valign=top><tt>rw</tt></td>
+<tr>
+<td valign=top><tt>process.uid</tt></td>
+<td valign=top>The numeric user id (uid) to use for the default 
+process context.
+This should be a number between 0 and 32767.</td>
+<td valign=top><tt>1</tt></td>
+<tr>
+<td valign=top><tt>process.gid</tt></td>
+<td valign=top>The numeric group id (gid) to use for the default 
+process context.
+This should be a number between 0 and 32767.</td>
+<td valign=top><tt>1</tt></td>
+<tr>
+<td valign=top><tt>process.umask</tt></td>
+<td valign=top>The umask to use for the default process context.  This should 
+be an octal number between 000 and 777.</td>
+<td valign=top><tt>022</tt></td>
+<tr>
+<td valign=top><tt>process.dir</tt></td>
+<td valign=top>The working directory in the simulated file system to be used 
+for the default process context.  This should be a string that 
+starts with "/".</td>
+<td valign=top><tt>/root</tt>
+<tr>
+<td valign=top><tt>process.max_open_files</tt></td>
+<td valign=top>The maximum number of files that may be open at a 
+time by a process.
+When a process context is created, this many slots are created for
+possible open files.</td>
+<td valign=top><tt>10</tt></td>
+<tr>
+<td valign=top><tt>kernel.max_open_files</tt></td>
+<td valign=top>The maximum number of files that may be open at one time by
+all processes in the simulation.  When the simulator starts, this 
+many slots are created for possible open files.</td>
+<td valign=top><tt>20</tt></td>
+</table>
+
+<h3><a name="conf.sample">A Sample Configuration File</a></h3>
+
+In addition to the standard configuration file, "filesys.conf", 
+the distribution also includes a smaller sample configuration
+file, "sample.conf".  This is shown below to illustrate a typical 
+configuration file.
+
+<blockquote><pre>
+!
+! my personal filesys configuration file
+!
+filesystem.root.filename = rayo.dat
+filesystem.root.mode = r
+process.uid = 1000
+process.gid = 1000
+process.umask = 002
+process.dir = /home/rayo
+
+</pre></blockquote>
+
+<p>
+In this particular example, the file system is contained in the
+backing file "rayo.dat", which is here being opened for read-only
+access.  The working directory for the default process context
+is "/home/rayo", with the uid, gid, and umask shown.
+
+<h3><a name="conf.alt">Specifying an Alternate Configuration File</a></h3>
+
+<p>The default configuration file is named "filesys.conf" and is 
+included in the application distribution.  You may modify this
+file directly to set various options, or you may create your
+own configuration file and specify the name of this new file
+when you launch your simulator programs.
+
+<p>If you choose to create your own configuration file, you 
+will need to define a system property "filesys.conf" 
+which contains the name of file.  For example, suppose you
+wanted to run the "ls" program using "my_filesys.conf" as the
+configuration file.  Your <tt>java</tt> command would look something
+like this:
+<blockquote><pre>
+java -Dfilesys.conf=my_filesys.conf ls /home
+</blockquote></pre>
+If there is no value set for the "filesys.conf" system property,
+then the name "filesys.conf" is used as the default configuration 
+filename.
+
+
+<h2><a name="writing">Writing File System Simulator Programs</a></h2>
+
+<p>
+Writing programs that use the File System Simulator
+requires the use of the <tt>Kernel</tt> class, 
+and may involve the use of the classes
+<tt>Stat</tt> and <tt>DirectoryEntry</tt>.
+If you're writing ordinary programs that use the
+standard file system calls, you should not need to reference
+any other classes.
+</p>
+
+<p>
+These three classes are described briefly here.  For more 
+information, follow the link for the class to the <tt>javadoc</tt>
+for that class.
+<dl>
+<dt><a href="javadoc/Kernel.html">Kernel</a></dt>
+<dd>
+sets up the simulator environment and defines all the
+system calls. This class defines: the method 
+<tt>initialize()</tt>, which is used to initialize 
+the file system simulator; the <tt>creat()</tt>, <tt>open()</tt>,
+<tt>read()</tt>, <tt>write()</tt>, <tt>close()</tt>,
+and other methods which simulate the work of a file system;
+and constants like <tt>EBADF</tt>, <tt>S_IFDIR</tt>, and 
+<tt>O_RDONLY</tt> which are used to represent parameter or 
+return values for the system calls.  All the methods and
+fields of Kernel are static; you do not instantiate a 
+Kernel object.  For examples, see any of the sample 
+programs (i.e., <tt>cat.java</tt>, <tt>cp.java</tt>, 
+<tt>ls.java</tt>, etc.)</dd>
+<dt><a href="javadoc/Stat.html">Stat</a></dt>
+<dd>
+is a data structure that represents information about a
+file or directory.  This intends to faithfully represent
+the Unix <tt>stat</tt> struct.  You may reference fields
+within a stat object directly (e.g., <tt>stat.st_ino</tt>),
+or using JavaBean-style accessor/mutator methods (e.g.,
+<tt>stat.getIno()</tt> or <tt>stat.setIno()</tt>.  Stat
+objects are updated by the methods 
+<tt>Kernel.stat()</tt> and <tt>Kernel.fstat()</tt>.
+For examples, see <tt>mkdir.java</tt>.</dd>
+<dt><a href="javadoc/DirectoryEntry.html">DirectoryEntry</a></dt>
+<dd>
+is a data
+structure that represents a single record in a directory
+file.  This intends to faithfully represent a Unix
+<tt>dirent</tt> struct.  It contains an index node number and
+a file name.  You may reference the fields directly (e.g., 
+<tt>dirent.d_ino</tt>), or using JavaBean-style accessor/mutator
+methods (e.g., <tt>dirent.getIno()</tt> or <tt>dirent.setIno()</tt>).
+However, Java programmers my find it more convenient to use
+the <tt>getName()</tt> and <tt>setName()</tt> 
+(which use <tt>String</tt>)
+instead of the field <tt>d_name</tt> (which is <tt>byte[]</tt>).  
+DirectoryEntry objects are updated by
+the method <tt>Kernel.readdir()</tt>.  For examples, see 
+<tt>mkdir.java</tt> and <tt>ls.java</tt>.</dd>
+</dl>
+For more information about Unix system calls and the 
+<tt>stat</tt> and <tt>dirent</tt> structs, refer to a 
+Unix system manual.  Users of Unix-like systems may
+find the commands "<tt>man -S 2 creat</tt>", 
+"<tt>man -S 2 open</tt>", etc. to be helpful.
+<p>
+All programs that use the File System Simulator should
+adhere to the following guidelines:
+<ul>
+<li>Invoke the method <tt><a 
+href="javadoc/Kernel.html#initialize()">Kernel.initialize()</a></tt>
+before any other File System Simulator calls.
+<li>Use <tt>Kernel.exit()</tt> when you wish to 
+terminate processing in your program.
+<li>Check for errors after each system call (e.g., 
+<tt>creat()</tt>, <tt>open()</tt>, <tt>read()</tt>,
+<tt>write()</tt>, etc.).
+Nearly all the system calls return -1 if an error 
+occurs.
+<li>Use <tt><a 
+href="javadoc/Kernel.html#perror(java.lang.String)">Kernel.perror()</a></tt> 
+to print the message associated with an error.
+<li>Use <tt><a 
+href="javadoc/Kernel.html#getErrno()">Kernel.getErrno()</a></tt> 
+to determine which error occurred, if needed.  Note that in standard
+Unix programs you would reference the static process 
+variable "errno".
+</ul>
+For examples, take a look at the following sample programs
+in the distribution:
+<ul>
+<li><tt><a href="cat.java">cat.java</a></tt>
+<li><tt><a href="cp.java">cp.java</a></tt>
+<li><tt><a href="ls.java">ls.java</a></tt>
+<li><tt><a href="mkdir.java">mkdir.java</a></tt>
+<li><tt><a href="tee.java">tee.java</a></tt>
+<!-- mkfs ??? -->
+</ul>
+Collectively, these sample programs invoke all of the core methods 
+(system calls) of the file system simulator.
+</p>
+
+<h2><a name="enhancing">Enhancing the File System Simulator</a></h2>
+
+<p>Adding new features to the File System Simulator
+is an excellent way to probe your understanding of 
+file system operation, and to investigate new features.
+Enhancements will almost certainly require changes
+to the class <tt>Kernel</tt>, and may necessitate
+changes to the sample programs described above.
+This section describes the other classes that
+implement the functionality of the simulator so 
+that you may understand the intended organization
+of these components when making a proposed enhancement.
+</p>
+<p>
+The following are the <em>internal</em> classes for
+the file system simulator:
+<dl>
+<dt><tt><a href="javadoc/BitBlock.html">BitBlock</a></tt>
+<dd>is a data structure that views a device block as a
+sequence of bits.  The methods <tt>setBit()</tt>, 
+<tt>resetBit()</tt>, and <tt>isBitSet()</tt> are used 
+to set, reset, or check a bit in the block.
+This structure is used to implement
+bitmaps, and is used by the file system simulator to 
+track allocated and free data blocks in the file system.
+<tt>BitBlock</tt> extends <tt>Block</tt>.
+</dd>
+<dt><tt><a href="javadoc/Block.html">Block</a></tt>
+<dd>is a data structure that views a device block as a
+sequence of bytes.  The field <tt>bytes</tt> is an array
+of <tt>byte</tt>, and is directly accessible.  Included
+are methods to <tt>read()</tt> and <tt>write()</tt> the
+block to a <tt>java.io.RandomAccessFile</tt>, which 
+simulate the action of reading or writing a device block.
+</dd>
+<dt><tt><a href="javadoc/FileDescriptor.html">FileDescriptor</a></tt>
+<dd>
+is a structure and collection of methods that represent
+an open file.  It includes a number of <tt>get</tt> and
+<tt>set</tt> methods for various tidbits of information
+about the open file, and provides <tt>readBlock</tt>
+and <tt>writeBlock()</tt> methods for reading and writing
+the blocks of the file.
+</dd>
+<dt><tt><a href="javadoc/FileSystem.html">FileSystem</a></tt>
+<dd>
+is a structure and collection of methods that represent
+an open (mounted) file system.  It includes a few <tt>get</tt>
+and <tt>set</tt> methods for various fields about the file
+system, but more importantly, includes methods to <tt>open()</tt>
+the file behind the file system, to <tt>read()</tt> and 
+<tt>write()</tt> blocks of the device, to manage blocks
+(<tt>allocateBlock()</tt> and <tt>freeBlock()</tt>) and
+to manage inodes (<tt>allocateIndexNode()</tt>).  In general,
+<tt>Kernel</tt> methods should call <tt>FileSystem</tt> 
+methods when they want to read or write data in the file system.
+</dd>
+<dt><tt><a href="javadoc/IndexNode.html">IndexNode</a></tt>
+<dd>
+is a structure and collection of methods 
+for representing an index node.  This is 
+meant to reflect the exact structure on disk for an index
+node.  It includes <tt>get</tt> and <tt>set</tt> methods
+for each of the fields in the index node.  Also included
+are <tt>read()</tt> and <tt>write()</tt> methods which
+are used to copy data to and from byte arrays (not disk files).
+</dd>
+<dt><tt><a href="javadoc/ProcessContext.html">ProcessContext</a></tt>
+<dd>
+is a structure and collection of methods to represent 
+a process.  This is where the simulator stores the 
+uid, gid, umask, dir, and other information for the 
+current process.  It includes <tt>get</tt> and <tt>set</tt>
+methods for each of the fields in a process.
+</dd>
+<dt><tt><a href="javadoc/SuperBlock.html">SuperBlock</a></tt>
+<dd>
+is a structure and collection of methods for representing
+the superblock on the disk.  In our implementation, the
+superblock contains information about the block size, 
+number of blocks, offsets to the first block of the free
+list, inode block, and data block areas of the device.
+It includes <tt>get</tt> and <tt>set</tt> methods
+for each of the fields in the superblock.  Also
+included are methods to <tt>read()</tt> and <tt>write()</tt>
+the superblock.
+</dd>
+</dl>
+Of course, you should look at the code and plan your enhancements
+carefully.
+
+<h2><a name="exercises">Suggested Exercises</a></h2>
+
+<ol>
+<li>Use <tt>mkfs</tt> to create a file system with a block size 
+of 64 bytes and having a total of 8 blocks.  How many index nodes will fit in a block?  
+How many directory entries will fit in a block?  Use <tt>dump</tt>
+to examine the file system backing file, and note the value in
+byte 64.  What does this value represent?  Use <tt>mkdir</tt> to 
+create a directory (e.g., <tt>/usr</tt>), and then use <tt>dump</tt>
+to examine byte 64 again.  What do you notice?  Repeat the process of
+creating a directory (e.g., <tt>/bin</tt>, <tt>/lib</tt>, <tt>/var</tt>, 
+<tt>/etc</tt>, <tt>/home</tt>, <tt>/mnt</tt>, etc.) and examining with <tt>dump</tt>.
+How many directories can you create before you fill up the file system?
+Explain why.
+<p><!-- --></p>
+
+<li>Enhance <tt>ls.java</tt> to display for each file the 
+uid and gid as decimal numbers, 
+and the 9 low-order bits of mode as a 3-digit octal number 
+(i.e., 000..777).
+<p><!-- --></p>
+
+<li>Write a program <tt>find.java</tt> which, given a path name, checks to
+see if the path exists, and if so lists that path name and all files in all 
+directories (and sub-directories, and sub-sub-directories, etc.) under it, 
+one path name per line.  
+For example:
+<blockquote><pre>
+java find /home
+</pre></blockquote>
+might produce the following output:
+<blockquote><pre>
+/home
+/home/nathant
+/home/nathant/bar.txt
+/home/nathant/foo.txt
+/home/rayo
+/home/rayo/homer
+/home/rayo/homer/odyssey.txt
+/home/rayo/homer/iliad.txt
+/home/rayo/virgil
+/home/rayo/virgil/aeneid.txt
+/home/rayo/virgil/eclogues.txt
+/home/rayo/virgil/georgics.txt
+</pre></blockquote>
+under the right circumstances, of course.
+Hint: Your program may include a recursive method or an array for keeping 
+track of each directory as you open it.  What is the maximum directory
+tree depth to which your program will work?
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to include a new method,
+<tt>Kernel.chown()</tt>, which, given the name of a file, a uid, 
+and a gid, sets the file's uid and gid to the values given.
+Note that only the owner of a file (or the super-user) may
+change the gid of a file.  Only the super-user may change the
+uid of a file.  To test your new method, 
+write two new programs <tt>chown.java</tt> and 
+<tt>chgrp.java</tt> which accept a uid or gid (respectively) 
+and a list of file or directory names.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to include a new method,
+<tt>Kernel.chmod()</tt>, which, given the name of a file and a 
+mode, sets the file's mode to the value given.  Note that only
+the owner of a file (or the super-user) may change
+the mode for a file, and that only the 9 low-order bits of 
+mode are affected.  To test your new method,
+write a new program <tt>chmod.java</tt> which accepts a 
+mode value (000..777) and a list of file or directory names.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to include a new method,
+<tt>Kernel.umask()</tt>, which, given a umask, saves that 
+umask in the process context and returns the <em>previous</em>
+umask value.  Note that only the 9 low-order bits of the
+umask are used.  Further, modify <tt>Kernel.creat()</tt>
+so that the mode for newly created files is the logical
+and of the given mode and the <em>compliment</em> of 
+the current umask value from the process context.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to include a new method,
+<tt>Kernel.link()</tt>, which, given two path names, creates
+the second path as a (hard) link to the first path.  <tt>link()</tt>
+should find the inode number for the first file, and then write a 
+directory entry for the second path which references the same
+index node.  Don't forget to increment nlink on the index node.
+To test your new method, write a new program, <tt>ln.java</tt>,
+which, given two path names, performs the <tt>link()</tt> operation.
+Assume that creating a link to a directory is not allowed.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to include a new method, 
+<tt>Kernel.unlink()</tt>, which, given the name of a file, removes 
+the directory entry for that file and decrements <tt>nlink</tt>
+for the index node.  If <tt>nlink</tt> is decremented to zero, 
+free all the blocks of the file.  If the file is currently open
+by any process, mark the file so that the blocks will be 
+freed when the file is closed by the last process.
+To test your new method, write a new program <tt>rm.java</tt>
+which accept the names of files to be unlinked.
+Assume that unlinking a directory is not allowed.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to include a new method,
+<tt>Kernel.access()</tt>, which, given the name of a file and a 
+mode, determines whether the current process can access the file
+in the desired mode.  In this case, mode may be 4 (read), 2 (write),
+1 (execute), or any combination thereof.  If the mode is 0, only 
+the directories leading to the file are checked for read access.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator 
+to keep track of <tt>atime</tt>, <tt>mtime</tt>, 
+and <tt>ctime</tt> for file and directory operations.
+Consider using <tt>java.util.Date(long)</tt>, 
+<tt>java.util.Date.getTime()</tt>, and 
+<tt>java.util.Date.setTime(long)</tt> as part of your
+solution.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to support 
+indirect blocks, and double- and triple-indirect
+blocks.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to support
+a simplified form of file sharing.  Assume that a
+file may not be opened for writing if it is already
+open by any process; a file may be concurrently open 
+any number of times for reading.
+<p><!-- --></p>
+
+<li>Enhance the file system simulator to allow the use
+of a list instead of a bitmap for keeping track of free
+data blocks.  Modify <tt>mkfs.java</tt> to allow the user
+to enter a fourth parameter to choose between
+<tt>free-list</tt> and <tt>free-bitmap</tt>.
+<p><!-- --></p>
+
+<li>Write a program called <tt>fsck.java</tt> which 
+checks a file system for internal consistency.  For
+example, it should verify that all the inodes mentioned
+in directory entries have the correct number of nlink, 
+and that all blocks mentioned in the inodes are marked
+as allocated blocks, and all blocks NOT mentioned in the
+inodes are marked as free blocks.  For a more complete
+description of <tt>fsck</tt>, consult the text.
+<p><!-- --></p>
+
+</ol>
+<!--
+  df
+  lsof
+<li>Write a program called <tt>lsof.java</tt>, which lists all the files 
+open in all open file systems. ??? How do we tell the name under which the
+file is open?
+  ??? does rmdir() use unlink()?
+  link(), symlink()
+  anything having to do with multiple processes
+  anything having to do with multiple file systems
+-->
+
+<h2><a name="todo">To Do</a></h2>
+<ol>
+<li>Attempting to create or open for writing a file on a 
+read-only file system should return EROFS,
+not an IOException.
+<li>The <tt>cp</tt> program doesn't check to make sure that
+the input and output files are not directory files, but should.
+<li>The <tt>cp</tt> and <tt>tee</tt> programs are not careful
+about the mode used for the output file, but should be.
+</ol>
+
+<h2><a name="copyright">Copyright</a></h2>
+
+&copy; Copyright 2001, Prentice-Hall, Inc.
+<p>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+<p>
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+<p>
+You should have received a copy of the GNU General Public License
+along with this program (see <a href="copying.txt">copying.txt</a>); 
+if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+<p>
+
+Please send suggestions, corrections, and comments to
+<a href="http://www.ontko.com/~rayo/">Ray Ontko</a> 
+(<a href="mailto:rayo@ontko.com"><i>rayo@ontko.com</i></a>).
+<p>
+<i>Last updated: October 3, 2001</i>
+</body>
+</html>
